@@ -13,6 +13,7 @@ error NotOwner();
 error PriceMustBeGreaterThanZero();
 error NotApprovedForMarketPlace();
 error NotListedYet(address nftAddress, uint256 tokenId);
+error InsufficientFunds(address nftAddress, uint256 tokenId, uint256 price);
 
 
 contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
@@ -84,7 +85,20 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
         emit nftCanceled(msg.sender, nftAddress, tokenId);
     }
 
-    function BuyItem() external {}
+    function buyNft(address _nftAddress, uint256 _tokenId) 
+        external payable isListed(_nftAddress, _tokenId) nonReentrant
+    {
+        List memory listedNft = lists[_nftAddress][_tokenId];
+
+        if(msg.value < listedNft.price){
+            revert InsufficientFunds(_nftAddress, _tokenId, listedNft.price);
+        }
+
+        seller[listedNft.seller] += msg.value;
+        IERC721(_nftAddress).safeTransferFrom(listedNft.seller, msg.sender, _tokenId);
+        emit nftBought(msg.sender, _nftAddress, _tokenId, listedNft.price);
+
+    }
 
     function withdraw() external {}
 
