@@ -14,6 +14,7 @@ error PriceMustBeGreaterThanZero();
 error NotApprovedForMarketPlace();
 error NotListedYet(address nftAddress, uint256 tokenId);
 error InsufficientFunds(address nftAddress, uint256 tokenId, uint256 price);
+error newPriceMustBeAboveZero();
 
 
 contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
@@ -76,7 +77,16 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
         emit nftListed(msg.sender, nftAddress, tokenId, price);
     }
 
-    function updateList(address nftAddress, uint256 tokenId, uint256 price) external {}
+    function updateList(address nftAddress, uint256 tokenId, uint256 newPrice) 
+        external isListed(nftAddress, tokenId) onlyOwner(nftAddress, tokenId, msg.sender) nonReentrant
+    {
+        if(newPrice == 0){
+            revert newPriceMustBeAboveZero();
+        }
+
+        lists[nftAddress][tokenId].price = newPrice;
+        emit nftListed(msg.sender, nftAddress, tokenId, newPrice);
+    }
 
     function cancelList(address nftAddress, uint256 tokenId) 
         external isListed(nftAddress, tokenId) onlyOwner(nftAddress, tokenId, msg.sender)
@@ -95,6 +105,8 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
         }
 
         seller[listedNft.seller] += msg.value;
+        delete(lists[_nftAddress][_tokenId]); //deleted after the exchange of nft.
+
         IERC721(_nftAddress).safeTransferFrom(listedNft.seller, msg.sender, _tokenId);
         emit nftBought(msg.sender, _nftAddress, _tokenId, listedNft.price);
 
