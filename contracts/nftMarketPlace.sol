@@ -12,6 +12,7 @@ error AlreadyListed(address nftAddress, uint256 tokenId);
 error NotOwner();
 error PriceMustBeGreaterThanZero();
 error NotApprovedForMarketPlace();
+error NotListedYet(address nftAddress, uint256 tokenId);
 
 
 contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
@@ -24,6 +25,9 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
     constructor() ERC721("MyToken", "MTK")  {}
 
     event nftListed(address indexed seller, address indexed nftAddress,uint256 indexed tokenId,uint256 price);
+    event nftCanceled(address indexed seller,address indexed nftAddress,uint256 indexed tokenId);
+    event nftBought(address indexed buyer,address indexed nftAddress,uint256 indexed tokenId,uint256 price);
+
     mapping(address => mapping(uint256 => List)) private lists; //address => tokenId => list
     mapping(address => uint256) private seller; //address of the seller => nft price
 
@@ -45,6 +49,15 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
         _;
     }
 
+    modifier isListed(address nftAddress, uint256 tokenId){
+        List memory _lists = lists[nftAddress][tokenId];
+        if(_lists.price <=0){
+            revert NotListedYet(nftAddress, tokenId);
+        }
+        _;
+
+    }
+
 
     function listItem(address nftAddress, uint256 tokenId, uint256 price) 
         external notListed(nftAddress, tokenId, msg.sender) onlyOwner(nftAddress, tokenId, msg.sender)
@@ -64,7 +77,12 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
 
     function updateList(address nftAddress, uint256 tokenId, uint256 price) external {}
 
-    function cancelList(address nftAddress, uint256 tokenId, uint256 price) external {}
+    function cancelList(address nftAddress, uint256 tokenId) 
+        external isListed(nftAddress, tokenId) onlyOwner(nftAddress, tokenId, msg.sender)
+    {
+        delete(lists[nftAddress][tokenId]);
+        emit nftCanceled(msg.sender, nftAddress, tokenId);
+    }
 
     function BuyItem() external {}
 
@@ -73,4 +91,3 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
     function getListing(address nftAddress, uint256 tokenId, uint256 price) external{}
 }
 
-//MyNFTModule#MyNFT - 0x8d9bBf937d90B8dd18f8Bf6901c767a052c9ab40
