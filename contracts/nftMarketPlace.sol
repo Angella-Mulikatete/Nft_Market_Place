@@ -23,8 +23,10 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
         uint256 price;
         address seller;
     }
-
-    constructor() ERC721("MyToken", "MTK")  {}
+    address public _owner;
+    constructor() ERC721("AngieNFt", "ATK")  {
+        _owner = msg.sender;
+    }
 
     event nftListed(address indexed seller, address indexed nftAddress,uint256 indexed tokenId,uint256 price);
     event nftCanceled(address indexed seller,address indexed nftAddress,uint256 indexed tokenId);

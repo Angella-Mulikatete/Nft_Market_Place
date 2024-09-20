@@ -26,7 +26,11 @@ contract MyNFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
 
     // The following functions are overrides required by Solidity.
 
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+    function tokenURI(uint256 tokenId) public pure override(ERC721, ERC721URIStorage) returns (string memory) {
+        // Check if tokenId is valid
+        require(tokenId >= 0, "Invalid tokenId");
+
+        // Return the token URI
         return TOKEN_URI;
     }
 
@@ -40,5 +44,3 @@ contract MyNFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         return super.supportsInterface(interfaceId);
     }
 }
-
-//MyNFTModule#MyNFT - 0x8d9bBf937d90B8dd18f8Bf6901c767a052c9ab40
