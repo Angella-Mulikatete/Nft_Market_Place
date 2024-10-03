@@ -7,20 +7,24 @@ describe("NftMarketPlace", function(){
     async function deployNftMarketPlace(){
         const[owner, buyer, seller, otherAddr] = await ethers.getSigners();
         const PRICE = ethers.parseEther("0.1")
-        const TOKEN_ID = 0
+        const TOKEN_ID = 0;
        
         //deploy nft
         const nftContract = await hre.ethers.getContractFactory("MyNFT");
-        const nft = await nftContract.deploy();
+        const nftAddress = await nftContract.deploy();
 
         //deploy nft market place
         const nftMarketPlaceContract = await hre.ethers.getContractFactory("NftMarketPlace");
         const nftMarketPlace = await nftMarketPlaceContract.deploy();
 
-        await nft.connect(seller).mintNFT();
-        await nft.connect(seller).approve(nftMarketPlace, TOKEN_ID);
+        await nftAddress.connect(seller).mintNFT();
+        await nftAddress.connect(seller).approve(nftMarketPlace, TOKEN_ID);
 
-        return { nftMarketPlace, nft, buyer, seller,owner}
+        const tokenCounter = await nftAddress.getTokenCounter();
+        expect(tokenCounter).to.equal(1); 
+        expect(await nftAddress.ownerOf(0)).to.equal(seller.address); // Seller owns the NFT
+
+        return { nftMarketPlace, nftAddress, buyer, seller,owner,TOKEN_ID, PRICE}
     }
 
     describe("deployment", function(){
@@ -28,6 +32,22 @@ describe("NftMarketPlace", function(){
             const{owner, nftMarketPlace} = await loadFixture(deployNftMarketPlace);
             expect(await nftMarketPlace._owner()).to.equal(owner.address);
         });
+    });
+
+    describe("listNft", function(){
+        it("list nfts", async()=>{
+            
+            
+            const{owner, nftMarketPlace, nftAddress, PRICE, seller,TOKEN_ID} = await loadFixture(deployNftMarketPlace);
+            await nftAddress.connect(seller).mintNFT();
+            await nftAddress.connect(seller).approve(nftMarketPlace, TOKEN_ID); 
+
+            expect(await nftMarketPlace.connect(seller).listNft(nftAddress, TOKEN_ID, PRICE)).to.emit("nftListed");
+
+            // expect(listing.price).to.equal(ethers.utils.parseEther("1"));
+            // expect(listing.seller).to.equal(seller.address);
+        });
+
     });
 
 

@@ -63,7 +63,7 @@ contract NftMarketPlace  is ReentrancyGuard,ERC721, ERC721Burnable {
     }
 
 
-    function listItem(address nftAddress, uint256 tokenId, uint256 price) 
+    function listNft(address nftAddress, uint256 tokenId, uint256 price) 
         external notListed(nftAddress, tokenId, msg.sender) onlyOwner(nftAddress, tokenId, msg.sender)
     {
         if(price <= 0){
